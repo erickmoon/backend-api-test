@@ -204,22 +204,152 @@ docker-compose down
 
 ## API Documentation
 
-### Customers
+## API Endpoints Documentation
+
+### Authentication Endpoints
+
+- `POST /api/token/` - Obtain JWT token pair
+  ```bash
+  curl -X POST -H "Content-Type: application/json" -d '{"username": "your_username", "password": "your_password"}' http://localhost:8000/api/token/
+  ```
+- `POST /api/token/refresh/` - Refresh JWT token
+  ```bash
+  curl -X POST -H "Content-Type: application/json" -d '{"refresh": "your_refresh_token"}' http://localhost:8000/api/token/refresh/
+  ```
+
+### Customer Endpoints
 
 - `GET /api/customers/` - List all customers
-- `POST /api/customers/` - Create a new customer
-- `GET /api/customers/{id}/` - Retrieve a customer
-- `PUT /api/customers/{id}/` - Update a customer
-- `DELETE /api/customers/{id}/` - Delete a customer
 
-### Orders
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/
+  ```
+
+- `POST /api/customers/` - Create a new customer
+
+  ```bash
+  curl -X POST \
+    -H "Authorization: Bearer your_access_token" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "John Doe",
+      "code": "CUST001",
+      "phone_number": "+254722000000"
+    }' \
+    http://localhost:8000/api/customers/
+  ```
+
+- `GET /api/customers/{id}/` - Retrieve a customer
+
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/1/
+  ```
+
+- `PUT /api/customers/{id}/` - Update a customer
+
+  ```bash
+  curl -X PUT \
+    -H "Authorization: Bearer your_access_token" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "John Doe Updated",
+      "code": "CUST001",
+      "phone_number": "+254722000000"
+    }' \
+    http://localhost:8000/api/customers/1/
+  ```
+
+- `DELETE /api/customers/{id}/` - Delete a customer
+  ```bash
+  curl -X DELETE -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/1/
+  ```
+
+### Order Endpoints
 
 - `GET /api/orders/` - List all orders
+
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/orders/
+  ```
+
 - `POST /api/orders/` - Create a new order
+
+  ```bash
+  curl -X POST \
+    -H "Authorization: Bearer your_access_token" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "customer_code": "CUST001",
+      "item": "Product XYZ",
+      "amount": "1000.00"
+    }' \
+    http://localhost:8000/api/orders/
+  ```
+
 - `GET /api/orders/{id}/` - Retrieve an order
+
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/orders/1/
+  ```
+
 - `PUT /api/orders/{id}/` - Update an order
+
+  ```bash
+  curl -X PUT \
+    -H "Authorization: Bearer your_access_token" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "customer_code": "CUST001",
+      "item": "Updated Product",
+      "amount": "1500.00"
+    }' \
+    http://localhost:8000/api/orders/1/
+  ```
+
 - `GET /api/orders/search/` - Search orders
+
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" \
+    "http://localhost:8000/api/orders/search/?q=Product"
+  ```
+
 - `GET /api/orders/?start_date=2024-01-01&end_date=2024-01-31` - Date range filter
+  ```bash
+  curl -H "Authorization: Bearer your_access_token" \
+    "http://localhost:8000/api/orders/?start_date=2024-01-01&end_date=2024-01-31"
+  ```
+
+### Response Examples
+
+#### Success Response
+
+```json
+{
+  "id": 1,
+  "customer_code": "CUST001",
+  "customer_name": "John Doe",
+  "item": "Product XYZ",
+  "amount": "1000.00",
+  "order_time": "2024-01-11T10:00:00Z",
+  "status": "PENDING"
+}
+```
+
+#### Error Response
+
+```json
+{
+  "error": "Invalid customer code",
+  "detail": "Customer with code CUST001 not found"
+}
+```
+
+### Note
+
+- All endpoints require JWT authentication
+- Dates should be in YYYY-MM-DD format
+- Customer codes must be uppercase alphanumeric
+- Amount should have maximum 2 decimal places
 
 ## Testing
 
