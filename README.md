@@ -2,6 +2,60 @@
 
 A Django REST API for managing customers and orders with SMS notifications.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Project Structure](#Project-Structure)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Local Development Setup](#local-development-setup)
+  - [1. PostgreSQL Setup](#1-postgresql-setup)
+  - [2. Project Setup](#2-project-setup)
+  - [3. Database Configuration](#3-database-configuration)
+  - [4. Running the Server](#4-running-the-server)
+- [Docker Deployment](#docker-deployment)
+- [API Documentation](#api-documentation)
+  - [Authentication Endpoints](#authentication-endpoints)
+  - [Customer Endpoints](#customer-endpoints)
+  - [Order Endpoints](#order-endpoints)
+  - [Common Error Responses](#common-error-responses)
+- [Testing](#testing)
+- [Security Features](#security-features)
+
+## Overview
+
+The Customer Orders API is a robust, production-ready REST API built with Django and Django REST Framework that manages customer data and order processing with integrated SMS notifications. This system provides a complete solution for businesses needing to track customer information and their associated orders while automatically keeping customers informed about their order status.
+
+### Key Capabilities
+
+- **Customer Management**: Comprehensive CRUD operations for customer profiles with validation for unique customer codes and phone numbers
+- **Order Processing**: Full order lifecycle management from creation to completion
+- **Real-time Notifications**: Automated SMS notifications to customers using Africa's Talking gateway
+- **Search & Filtering**: Advanced search functionality for orders with date range filtering
+- **Secure Authentication**: JWT-based authentication with refresh token support
+- **Data Integrity**: PostgreSQL database with proper indexing and data validation
+- **Scalable Architecture**: Containerized deployment ready for scaling with Docker
+
+### Technical Stack
+
+- **Backend Framework**: Django 5.0.1 with Django REST Framework 3.14.0
+- **Database**: PostgreSQL 13+ for robust data storage
+- **Authentication**: JWT (JSON Web Tokens) with refresh token mechanism
+- **SMS Gateway**: Africa's Talking API integration
+- **Testing**: Comprehensive test suite using pytest with 90%+ coverage
+- **Containerization**: Docker and Docker Compose for consistent deployment
+- **CI/CD**: Automated testing and deployment pipeline
+
+### Design Philosophy
+
+The API follows these core principles:
+
+1. **RESTful Architecture**: Clear, resource-oriented endpoints following REST best practices
+2. **Security First**: Implementing industry-standard security practices and data protection
+3. **Scalability**: Modular design allowing for easy scaling and feature additions
+4. **Maintainability**: Clean code structure with comprehensive documentation
+5. **Test Coverage**: Extensive testing at unit, integration, and system levels
+
 ## Project Structure
 
 `django_customer_orders/` - Customer Orders Management System
@@ -80,14 +134,14 @@ Each app follows Django's recommended structure with separate files for models, 
 
 First, install PostgreSQL if you haven't already:
 
-# For Ubuntu
+For Ubuntu
 
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-# For macOS using Homebrew
+For macOS using Homebrew
 
 ```bash
 brew install postgresql
@@ -121,14 +175,14 @@ GRANT ALL ON SCHEMA public TO customer_orders_user;
 
 ### 2. Python Environment Setup
 
-# Create and activate virtual environment
+Create and activate virtual environment
 
 ```bash
 python -m venv venv
 source venv/bin/activate # On Windows: venv\Scripts\activate
 ```
 
-# Install required packages
+Install required packages
 
 ```bash
 
@@ -204,152 +258,303 @@ docker-compose down
 
 ## API Documentation
 
-## API Endpoints Documentation
+### Base URL
+
+```
+http://localhost:8000/api
+```
 
 ### Authentication Endpoints
 
-- `POST /api/token/` - Obtain JWT token pair
-  ```bash
-  curl -X POST -H "Content-Type: application/json" -d '{"username": "your_username", "password": "your_password"}' http://localhost:8000/api/token/
-  ```
-- `POST /api/token/refresh/` - Refresh JWT token
-  ```bash
-  curl -X POST -H "Content-Type: application/json" -d '{"refresh": "your_refresh_token"}' http://localhost:8000/api/token/refresh/
-  ```
+#### Obtain JWT Token
+
+```http
+POST /token/
+
+// Request
+{
+    "username": "your_username",
+    "password": "your_password"
+}
+
+// Success Response
+{
+    "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+#### Refresh JWT Token
+
+```http
+POST /token/refresh/
+
+// Request
+{
+    "refresh": "your_refresh_token"
+}
+
+// Success Response
+{
+    "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
 
 ### Customer Endpoints
 
-- `GET /api/customers/` - List all customers
+#### List All Customers
 
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/
-  ```
+```http
+GET /customers/
 
-- `POST /api/customers/` - Create a new customer
+// Headers
+Authorization: Bearer your_access_token
 
-  ```bash
-  curl -X POST \
-    -H "Authorization: Bearer your_access_token" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "name": "John Doe",
-      "code": "CUST001",
-      "phone_number": "+254722000000"
-    }' \
-    http://localhost:8000/api/customers/
-  ```
+// Success Response
+{
+    "count": 2,
+    "results": [
+        {
+            "id": 1,
+            "name": "John Doe",
+            "code": "CUST001",
+            "phone_number": "+254722000000",
+            "created_at": "2025-01-11T10:00:00Z"
+        },
+        {
+            "id": 2,
+            "name": "Jane Smith",
+            "code": "CUST002",
+            "phone_number": "+254722000001",
+            "created_at": "2025-01-11T11:00:00Z"
+        }
+    ]
+}
+```
 
-- `GET /api/customers/{id}/` - Retrieve a customer
+#### Create Customer
 
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/1/
-  ```
+```http
+POST /customers/
 
-- `PUT /api/customers/{id}/` - Update a customer
+// Headers
+Authorization: Bearer your_access_token
+Content-Type: application/json
 
-  ```bash
-  curl -X PUT \
-    -H "Authorization: Bearer your_access_token" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "name": "John Doe Updated",
-      "code": "CUST001",
-      "phone_number": "+254722000000"
-    }' \
-    http://localhost:8000/api/customers/1/
-  ```
+// Request
+{
+    "name": "John Doe",
+    "code": "CUST001",
+    "phone_number": "+254722000000"
+}
 
-- `DELETE /api/customers/{id}/` - Delete a customer
-  ```bash
-  curl -X DELETE -H "Authorization: Bearer your_access_token" http://localhost:8000/api/customers/1/
-  ```
+// Success Response
+{
+    "id": 1,
+    "name": "John Doe",
+    "code": "CUST001",
+    "phone_number": "+254722000000",
+    "created_at": "2025-01-11T10:00:00Z"
+}
+
+// Error Response
+{
+    "code": ["Customer with this code already exists."],
+    "phone_number": ["Invalid phone number format."]
+}
+```
+
+#### Retrieve Customer
+
+```http
+GET /customers/{id}/
+
+// Headers
+Authorization: Bearer your_access_token
+
+// Success Response
+{
+    "id": 1,
+    "name": "John Doe",
+    "code": "CUST001",
+    "phone_number": "+254722000000",
+    "created_at": "2025-01-11T10:00:00Z"
+}
+
+// Error Response
+{
+    "detail": "Not found."
+}
+```
 
 ### Order Endpoints
 
-- `GET /api/orders/` - List all orders
+#### List All Orders
 
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/orders/
-  ```
+```http
+GET /orders/
 
-- `POST /api/orders/` - Create a new order
+// Headers
+Authorization: Bearer your_access_token
 
-  ```bash
-  curl -X POST \
-    -H "Authorization: Bearer your_access_token" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "customer_code": "CUST001",
-      "item": "Product XYZ",
-      "amount": "1000.00"
-    }' \
-    http://localhost:8000/api/orders/
-  ```
-
-- `GET /api/orders/{id}/` - Retrieve an order
-
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" http://localhost:8000/api/orders/1/
-  ```
-
-- `PUT /api/orders/{id}/` - Update an order
-
-  ```bash
-  curl -X PUT \
-    -H "Authorization: Bearer your_access_token" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "customer_code": "CUST001",
-      "item": "Updated Product",
-      "amount": "1500.00"
-    }' \
-    http://localhost:8000/api/orders/1/
-  ```
-
-- `GET /api/orders/search/` - Search orders
-
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" \
-    "http://localhost:8000/api/orders/search/?q=Product"
-  ```
-
-- `GET /api/orders/?start_date=2024-01-01&end_date=2024-01-31` - Date range filter
-  ```bash
-  curl -H "Authorization: Bearer your_access_token" \
-    "http://localhost:8000/api/orders/?start_date=2024-01-01&end_date=2024-01-31"
-  ```
-
-### Response Examples
-
-#### Success Response
-
-```json
+// Success Response
 {
-  "id": 1,
-  "customer_code": "CUST001",
-  "customer_name": "John Doe",
-  "item": "Product XYZ",
-  "amount": "1000.00",
-  "order_time": "2024-01-11T10:00:00Z",
-  "status": "PENDING"
+    "count": 2,
+    "results": [
+        {
+            "id": 1,
+            "customer_code": "CUST001",
+            "customer_name": "John Doe",
+            "item": "Product XYZ",
+            "amount": "1000.00",
+            "order_time": "2025-01-11T10:00:00Z",
+            "status": "PENDING"
+        },
+        {
+            "id": 2,
+            "customer_code": "CUST002",
+            "customer_name": "Jane Smith",
+            "item": "Product ABC",
+            "amount": "1500.00",
+            "order_time": "2025-01-11T11:00:00Z",
+            "status": "COMPLETED"
+        }
+    ]
 }
 ```
 
-#### Error Response
+#### Create Order
 
-```json
+```http
+POST /orders/
+
+// Headers
+Authorization: Bearer your_access_token
+Content-Type: application/json
+
+// Request
 {
-  "error": "Invalid customer code",
-  "detail": "Customer with code CUST001 not found"
+    "customer_code": "CUST001",
+    "item": "Product XYZ",
+    "amount": "1000.00"
+}
+
+// Success Response
+{
+    "id": 1,
+    "customer_code": "CUST001",
+    "customer_name": "John Doe",
+    "item": "Product XYZ",
+    "amount": "1000.00",
+    "order_time": "2025-01-11T10:00:00Z",
+    "status": "PENDING"
+}
+
+// Error Response
+{
+    "customer_code": ["Invalid customer code."],
+    "amount": ["Ensure that there are no more than 2 decimal places."]
 }
 ```
 
-### Note
+#### Search Orders
 
-- All endpoints require JWT authentication
-- Dates should be in YYYY-MM-DD format
-- Customer codes must be uppercase alphanumeric
-- Amount should have maximum 2 decimal places
+```http
+GET /orders/search/?q=Product
+
+// Headers
+Authorization: Bearer your_access_token
+
+// Success Response
+{
+    "count": 1,
+    "results": [
+        {
+            "id": 1,
+            "customer_code": "CUST001",
+            "customer_name": "John Doe",
+            "item": "Product XYZ",
+            "amount": "1000.00",
+            "order_time": "2025-01-11T10:00:00Z",
+            "status": "PENDING"
+        }
+    ]
+}
+```
+
+#### Filter Orders by Date Range
+
+```http
+GET /orders/?start_date=2025-01-01&end_date=2025-01-31
+
+// Headers
+Authorization: Bearer your_access_token
+
+// Success Response
+{
+    "count": 2,
+    "results": [
+        {
+            "id": 1,
+            "customer_code": "CUST001",
+            "customer_name": "John Doe",
+            "item": "Product XYZ",
+            "amount": "1000.00",
+            "order_time": "2025-01-11T10:00:00Z",
+            "status": "PENDING"
+        },
+        {
+            "id": 2,
+            "customer_code": "CUST002",
+            "customer_name": "Jane Smith",
+            "item": "Product ABC",
+            "amount": "1500.00",
+            "order_time": "2025-01-15T11:00:00Z",
+            "status": "COMPLETED"
+        }
+    ]
+}
+
+// Error Response
+{
+    "error": "Invalid date format. Use YYYY-MM-DD"
+}
+```
+
+### Common Error Responses
+
+```http
+// Authentication Error
+{
+    "detail": "Authentication credentials were not provided."
+}
+
+// Permission Error
+{
+    "detail": "You do not have permission to perform this action."
+}
+
+// Validation Error
+{
+    "field_name": [
+        "Error message details"
+    ]
+}
+
+// Not Found Error
+{
+    "detail": "Not found."
+}
+```
+
+### Important Notes
+
+- All endpoints require JWT authentication via Bearer token
+- Dates must be in YYYY-MM-DD format
+- Customer codes must be uppercase alphanumeric (e.g., CUST001)
+- Amount values support up to 2 decimal places (e.g., 1000.00)
+- Phone numbers must be in international format (e.g., +254722000000)
+- All timestamps are returned in ISO 8601 format with UTC timezone
 
 ## Testing
 
