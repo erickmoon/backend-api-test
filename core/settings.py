@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party apps
     "rest_framework",
+    "mozilla_django_oidc"
     # Local apps
     "customers",
     "orders",
@@ -35,6 +36,13 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = (
+    "core.authentication.backend.CustomOIDCAuthenticationBackend",
+    "django.contrib.auth.backends.ModelBackend",  # Backup authentication
+)
+
 
 ROOT_URLCONF = "core.urls"
 
@@ -68,6 +76,20 @@ DATABASES = {
     }
 }
 
+# OIDC Settings
+OIDC_RP_CLIENT_ID = os.getenv("OIDC_RP_CLIENT_ID")
+OIDC_RP_CLIENT_SECRET = os.getenv("OIDC_RP_CLIENT_SECRET")
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv("OIDC_OP_AUTHORIZATION_ENDPOINT")
+OIDC_OP_TOKEN_ENDPOINT = os.getenv("OIDC_OP_TOKEN_ENDPOINT")
+OIDC_OP_USER_ENDPOINT = os.getenv("OIDC_OP_USER_ENDPOINT")
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_STORE_ACCESS_TOKEN = True
+OIDC_STORE_ID_TOKEN = True
+
+# Login/Logout URLs
+LOGIN_REDIRECT_URL = "/api/customers/"
+LOGOUT_REDIRECT_URL = "/"
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -87,7 +109,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Rest Framework settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "mozilla_django_oidc.contrib.drf.OIDCAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
