@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party apps
     "rest_framework",
-    "mozilla_django_oidc"
+    "mozilla_django_oidc",
     # Local apps
     "customers",
     "orders",
