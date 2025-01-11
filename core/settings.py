@@ -29,7 +29,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "sahalcash.api_key_middleware.ApiKeyMiddleware",
+    "core.api_key_middleware.ApiKeyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
