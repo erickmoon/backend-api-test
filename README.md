@@ -147,6 +147,8 @@ Create `.env` file:
 ```bash
 DEBUG=True
 SECRET_KEY=<your-generated-django-secret-key>
+API_KEY=<yout-api-key>
+
 
 # Database
 DB_NAME=customer_orders_db
@@ -208,7 +210,12 @@ docker-compose down
 
 ### Authentication
 
-The API uses OpenID Connect (OIDC) for authentication via Auth0. You'll need to:
+The API uses two layers of authentication:
+
+1. OpenID Connect (OIDC) via Auth0
+2. API Key Authentication
+
+#### OpenID Connect Authentication
 
 1. **Get Auth0 Credentials**:
 
@@ -253,7 +260,45 @@ GET /api/customers/
 Authorization: Bearer <your-access-token>
 ```
 
-4. **Error Responses**:
+#### API Key Authentication
+
+For service-to-service or external API access, you can use API Key authentication.
+
+1. **Setting Up API Keys**:
+
+   - Set `ALLOWED_API_KEYS` in your `.env` file as a comma-separated list of keys
+
+   ```bash
+   ALLOWED_API_KEYS=api_key_1,api_key_2,api_key_3
+   ```
+
+2. **API Key Transmission Methods**:
+   You can send the API key via:
+
+   a. Authorization Header:
+
+   ```bash
+   Authorization: Api-Key your_api_key
+   ```
+
+   b. Custom Header:
+
+   ```bash
+   X-API-Key: your_api_key
+   ```
+
+   c. Query Parameter:
+
+   ```bash
+   GET /api/customers/?api_key=your_api_key
+   ```
+
+3. **Example Request**:
+   ```bash
+   curl -H "X-API-Key: your_api_key" https://yourdomain.com/api/customers/
+   ```
+
+### Authentication Error Responses
 
 ```bash
 # Invalid or expired token
@@ -263,18 +308,18 @@ Authorization: Bearer <your-access-token>
     "code": "invalid_token"
 }
 
-# Missing token
+# Missing or Invalid API Key
 {
     "status": "error",
-    "message": "Authorization header is missing",
-    "code": "no_token"
+    "message": "Invalid or missing API key",
+    "code": "invalid_api_key"
 }
 
-# Invalid authorization header format
+# Missing authentication
 {
     "status": "error",
-    "message": "Invalid authorization header format",
-    "code": "invalid_header"
+    "message": "Authentication credentials were not provided",
+    "code": "no_credentials"
 }
 ```
 
