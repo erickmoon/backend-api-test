@@ -146,23 +146,27 @@ Create `.env` file:
 
 ```bash
 DEBUG=True
-SECRET_KEY=your-secret-key
+SECRET_KEY=<your-generated-django-secret-key>
+
+# Database
 DB_NAME=customer_orders_db
 DB_USER=customer_orders_user
-DB_PASSWORD=your_password
+DB_PASSWORD=<your-database-password>
 DB_HOST=localhost
 DB_PORT=5432
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-# OpenID Connect Settings
-OIDC_RP_CLIENT_ID=your_client_id
-OIDC_RP_CLIENT_SECRET=your_client_secret
-OIDC_OP_AUTHORIZATION_ENDPOINT=https://your.provider/auth
-OIDC_OP_TOKEN_ENDPOINT=https://your.provider/token
-OIDC_OP_USER_ENDPOINT=https://your.provider/userinfo
-
-# Africa's Talking Settings
+# Africas Talking
 AFRICASTALKING_USERNAME=sandbox
-AFRICASTALKING_API_KEY=your_api_key
+AFRICASTALKING_API_KEY=<your-africas-talking-api-key>
+
+# Auth0 OIDC Settings
+OIDC_RP_CLIENT_ID=<your-auth0-client-id>
+OIDC_RP_CLIENT_SECRET=<your-auth0-client-secret>
+OIDC_OP_AUTHORIZATION_ENDPOINT=https://<your-auth0-domain>/authorize
+OIDC_OP_TOKEN_ENDPOINT=https://<your-auth0-domain>/oauth/token
+OIDC_OP_USER_ENDPOINT=https://<your-auth0-domain>/userinfo
+OIDC_OP_JWKS_ENDPOINT=https://<your-auth0-domain>/.well-known/jwks.json
 ```
 
 ### Database Initialization
@@ -204,10 +208,74 @@ docker-compose down
 
 ### Authentication
 
-OpenID Connect authentication is required for all API endpoints. Include the access token in request headers:
+The API uses OpenID Connect (OIDC) for authentication via Auth0. You'll need to:
 
-```http
-Authorization: Bearer your_oidc_access_token
+1. **Get Auth0 Credentials**:
+
+   - Create an Auth0 account
+   - Create a new application
+   - Get your Client ID and Client Secret
+   - Configure allowed callback URLs
+
+2. **Authentication Flow**:
+
+```bash
+# 1. Redirect user to Auth0 login
+GET https://<your-auth0-domain>/authorize
+?response_type=code
+&client_id=<your-client-id>
+&redirect_uri=<your-callback-url>
+&scope=openid profile email
+
+# 2. Exchange code for tokens
+POST https://<your-auth0-domain>/oauth/token
+{
+    "grant_type": "authorization_code",
+    "client_id": "<your-client-id>",
+    "client_secret": "<your-client-secret>",
+    "code": "<code-from-callback>",
+    "redirect_uri": "<your-callback-url>"
+}
+
+# 3. Response with tokens
+{
+    "access_token": "<your-access-token>",
+    "id_token": "<your-id-token>",
+    "token_type": "Bearer",
+    "expires_in": 86400
+}
+```
+
+3. **Using the Token**:
+
+```bash
+GET /api/customers/
+Authorization: Bearer <your-access-token>
+```
+
+4. **Error Responses**:
+
+```bash
+# Invalid or expired token
+{
+    "status": "error",
+    "message": "Token is invalid or has expired",
+    "code": "invalid_token"
+}
+
+# Missing token
+{
+    "status": "error",
+    "message": "Authorization header is missing",
+    "code": "no_token"
+}
+
+# Invalid authorization header format
+{
+    "status": "error",
+    "message": "Invalid authorization header format",
+    "code": "invalid_header"
+}
 ```
 
 ### Customer Endpoints
